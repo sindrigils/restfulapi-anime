@@ -49,6 +49,7 @@ def authenticate_user(username: str, password: str):
     return False
 
 
+# Token
 def create_access_token(
     username: str, user_id: str, expires_delta: Optional[timedelta] = None
 ):
@@ -59,6 +60,21 @@ def create_access_token(
         expire = datetime.utcnow() + timedelta(minutes=15)
     encode.update({"exp": expire})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+@router.post("/token")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+
+    if not user:
+        raise token_exception()
+
+    token = create_access_token(
+        username=user.get("username"),
+        user_id=str(user.get("_id")),
+    )
+
+    return {"token": token}
 
 
 @router.post("/create-user", status_code=status.HTTP_201_CREATED)
@@ -95,21 +111,6 @@ async def create_user(user_model: User):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Something went wrong!",
         )
-
-
-@router.post("/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
-
-    if not user:
-        raise token_exception()
-
-    token = create_access_token(
-        username=user.get("username"),
-        user_id=str(user.get("_id")),
-    )
-
-    return {"token": token}
 
 
 # Exceptions
