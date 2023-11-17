@@ -88,7 +88,6 @@ async def query_anime_by_name(name: str, user: user_dependency, request: Request
     cache_key = f"{name}"
     cache_data = get_cache(cache_key)
     if cache_data:
-        print(cache_data)
         return cache_data
 
     anime = anime_collection.find_one({"name": name})
